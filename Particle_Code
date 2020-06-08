@@ -1,0 +1,47 @@
+//LIBRARIES
+#include <MQTT.h>
+#include <Adafruit_DHT.h>
+#include "application.h"
+
+//CONSTANTS
+#define DHTPIN 2
+#define DHTTYPE DHT22
+
+int counter = 120;//this is used as a way to stop multiple IFTTT triggers going at once, but keep the data streaming
+
+//SETUPS
+MQTT client("test.mosquitto.org", 1883, callback);//set uo mqtt for data transfer to RPi
+
+void callback(char* topic, byte* payload, unsigned int length){};
+
+DHT dht(DHTPIN, DHTTYPE);//part of DHT library; sets DHT sensor and its pin to the constants
+
+void setup() {
+    client.connect("BenProject");//connect to MQTT
+    
+	pinMode(A0, INPUT);//set pin for soil moisture sensor
+	Serial.begin(9600);//set baud rate
+	dht.begin();//part of DHT library
+}
+
+void loop() {
+
+    int soilMoisture = analogRead(A0);
+    float h = dht.getHumidity();
+	float temp = dht.getTempCelcius();//read variables
+	
+	//publish all variables for RPi to collect
+	client.publish("Moisture: ", String(soilMoisture));
+	client.publish("Temp: ", String(temp));
+	client.publish("Humidity: ", String(h));
+	    
+   if(soilMoisture < 250 && counter >= 120)//when counter = 120, it means that 10 minutes has passed since it was last equal to 120, so we can send another SMS
+    {
+        Particle.publish("water_lvl_low");
+        counter = 0;//set counter back to 0
+    }
+    delay(5000);
+    counter++;
+    
+    client.loop();
+}
