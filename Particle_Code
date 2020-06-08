@@ -35,7 +35,7 @@ void loop() {
 	client.publish("Temp: ", String(temp));
 	client.publish("Humidity: ", String(h));
 	    
-   if(soilMoisture < 250 && counter >= 120)//when counter = 120, it means that 10 minutes has passed since it was last equal to 120, so we can send another SMS
+   if(soilMoisture < 400 && counter >= 120)//when counter = 120, it means that 10 minutes has passed since it was last equal to 120, so we can send another SMS
     {
         Particle.publish("water_lvl_low");
         counter = 0;//set counter back to 0
