@@ -1,0 +1,71 @@
+#import packages that are required
+import paho.mqtt.client as mqtt
+import time
+import datetime as dt
+from tkinter import *
+
+mywindow = Tk()#this is the master window for the GUI dashboard
+
+def myMessage(client, userdata, message):
+   
+    if(message.topic == "Moisture: "):
+        moisture.config(text = message.payload)
+   
+    if (message.topic== "Temp: "):
+        text = str(message.payload)
+        tempValue = float(text.strip("b\'_"))#remove unwanted text and convert to float
+       
+        #the following IF statement is to omit false readings from my poor sensors. Remove it if your sensors work without issue
+        if((tempValue < 30 and tempValue > -10) and tempValue != 0):
+            temperature.config(text = message.payload)
+       
+    if(message.topic == "Humidity: "):
+        text = str(message.payload)
+        humidityValue = float(text.strip("b\'_"))#remove unwanted text and convert to float
+       
+        #the following IF statement is to omit false readings from my poor sensors. Remove it if your sensors work without issue
+        if(humidityValue > 0 and humidityValue < 100):
+            humidity.config(text = message.payload)
+
+
+#set up MQTT client
+myClient = mqtt.Client('BenProject_mqtt')
+myClient.connect("test.mosquitto.org", 1883)
+
+#subscribe to topics and run myMessage function on message arival
+myClient.subscribe("Moisture: ")
+myClient.subscribe("Temp: ")
+myClient.subscribe("Humidity: ")
+myClient.on_message = myMessage
+
+#start MQTT loop
+myClient.loop_start()
+
+#write variables to TKinter master window
+
+#moisture
+text1 = Label(mywindow, text = 'Moisture: ')
+text1.grid(sticky = N, row = 1, column = 0)
+text1.config(font=('Arial', 40))
+moisture = Label(mywindow)
+moisture.grid(sticky = N, row = 1, column = 1)
+moisture.config(font = ('Arial', 40))
+
+#temperature
+text2 = Label(mywindow, text = 'Temperature(degrees celcius): ')
+text2.grid(sticky = N, row = 3, column = 0)
+text2.config(font = ('Arial', 40))
+temperature = Label(mywindow)
+temperature.grid(sticky = N, row = 3, column = 1)
+temperature.config(font = ('Arial', 40))
+
+#humidity
+text3 = Label(mywindow, text = 'Relative Humidity(%): ')
+text3.grid(sticky = N, row = 5, column = 0)
+text3.config(font = ('Arial', 40))
+humidity = Label(mywindow)
+humidity.grid(sticky = N, row = 5, column = 1)
+humidity.config(font = ('Arial', 40))
+
+#loop master TKinter window to continually update
+mywindow.mainloop()
